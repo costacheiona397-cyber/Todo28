@@ -14,16 +14,6 @@
       transition: background 0.3s, color 0.3s;
     }
 
-    body.light {
-      background: white;
-      color: black;
-    }
-    body.light header { background: #e2e8f0; }
-    body.light .event { background: #f1f5f9; color: black; }
-    body.light .add-form { background: #f1f5f9; color: black; }
-    body.light .done-section { background: #f1f5f9; color: black; }
-    body.light .preview { background: #f1f5f9; color: black; }
-
     header {
       text-align: center;
       padding: 20px;
@@ -53,9 +43,6 @@
     .event.mama::before { background: hotpink; }
     .event.tata::before { background: orange; }
     .event.eu::before { background: lightgreen; }
-    .event.mama.tata::before { background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
-    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
-    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
 
     .meta { font-size: 0.8em; opacity: 0.8; }
 
@@ -81,6 +68,7 @@
       flex-direction: column;
       gap: 10px;
       border-radius: 20px 0 0 20px;
+      overflow-y: auto;   /* 🔄 scroll vertical */
     }
     .add-form.open { right: 0; }
     .add-form h2 { margin-top: 0; }
@@ -177,10 +165,8 @@
     <h2>Adaugă activitate</h2>
     <label>Descriere</label>
     <input type="text" id="desc">
-    <label>Data</label>
-    <input type="date" id="date">
-    <label>Ora</label>
-    <input type="time" id="time">
+    <label>Data și ora</label>
+    <input type="datetime-local" id="datetime">
     <label>Persoane</label>
     <select id="person1">
       <option value="mama">Mama</option>
@@ -206,7 +192,6 @@
     todayEl.textContent = today.toLocaleDateString("ro-RO", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
     const todayStr = new Date().toISOString().split("T")[0];
-    const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
     function toggleForm() {
       document.getElementById("form").classList.toggle("open");
@@ -270,19 +255,22 @@
 
     function addEvent() {
       const desc = document.getElementById("desc").value;
-      const date = document.getElementById("date").value;
-      const time = document.getElementById("time").value;
+      const datetime = document.getElementById("datetime").value;
       const p1 = document.getElementById("person1").value;
       const p2 = document.getElementById("person2").value;
 
-      if (!desc || !date || !time) return;
+      if (!desc || !datetime) return;
+
+      const d = new Date(datetime);
+      const dateStr = d.toISOString().split("T")[0];
+      const timeStr = d.toLocaleTimeString("ro-RO", { hour: '2-digit', minute: '2-digit' });
 
       const div = document.createElement("div");
       div.className = "event " + p1 + (p2 ? " " + p2 : "");
 
       const content = document.createElement("div");
       content.innerHTML = `<div>${desc}</div>
-                           <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
+                           <div class="meta">${dateStr} — ${timeStr} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
 
       const actions = document.createElement("div");
       actions.className = "actions";
@@ -291,13 +279,10 @@
       div.appendChild(content);
       div.appendChild(actions);
 
-      const d = new Date(date);
       const now = new Date();
-
       const diffDays = Math.floor((d - now) / (1000*60*60*24));
-      const sameMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 
-      if (date === todayStr) {
+      if (dateStr === todayStr) {
         document.getElementById("today-events").appendChild(div);
       } else if (diffDays >= 0 && diffDays < 7) {
         document.getElementById("week-events").appendChild(div);
@@ -310,7 +295,7 @@
       saveEvents();
 
       document.getElementById("desc").value = "";
-      document.getElementById("time").value = "";
+      document.getElementById("datetime").value = "";
       document.getElementById("person2").value = "";
     }
 
@@ -344,7 +329,6 @@
       }
     }
 
-    // Salvare checkbox-uri
     document.getElementById("bibleCheck").addEventListener("change", saveEvents);
     document.getElementById("textCheck").addEventListener("change", saveEvents);
 

@@ -13,8 +13,16 @@
       overflow-x: hidden;
       transition: background 0.3s, color 0.3s;
     }
-    body.light { background: white; color: black; }
+
+    body.light {
+      background: white;
+      color: black;
+    }
     body.light header { background: #e2e8f0; }
+    body.light .event { background: #f1f5f9; color: black; }
+    body.light .add-form { background: #f1f5f9; color: black; }
+    body.light .done-section { background: #f1f5f9; color: black; }
+    body.light .preview { background: #f1f5f9; color: black; }
 
     header {
       text-align: center;
@@ -29,11 +37,12 @@
       background: #1e293b;
       margin: 10px 0;
       padding: 10px 15px 10px 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
     .event::before {
       content: "";
       position: absolute;
@@ -43,20 +52,20 @@
     }
     .event.mama::before { background: hotpink; }
     .event.tata::before { background: orange; }
-    .event.eu::before { background: turquoise; }
+    .event.eu::before { background: lightgreen; }
     .event.mama.tata::before { background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
-    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, turquoise 50%); }
-    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, turquoise 50%); }
+    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
+    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
+
+    .meta { font-size: 0.8em; opacity: 0.8; }
 
     .actions { display: flex; gap: 8px; }
     .actions button {
-      background: #3b82f6;
+      background: transparent;
       border: none;
-      color: white;
-      font-size: 16px;
+      color: inherit;
+      font-size: 18px;
       cursor: pointer;
-      border-radius: 10px;
-      padding: 5px 10px;
     }
 
     .add-form {
@@ -71,23 +80,26 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      border-radius: 20px 0 0 20px;
     }
     .add-form.open { right: 0; }
     .add-form h2 { margin-top: 0; }
+    .add-form label { display: block; margin-top: 5px; font-size: 14px; }
     .add-form input, .add-form select, .add-form button {
-      width: 100%; padding: 8px;
+      width: 100%; padding: 6px; margin-top: 4px;
       border-radius: 10px; border: none;
     }
     .add-form button {
       background: #3b82f6; color: white;
       font-weight: bold; cursor: pointer;
+      border-radius: 12px;
     }
 
     .toggle-btn {
       position: fixed;
       top: 10px; right: 10px;
       background: #3b82f6; color: white;
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 8px 12px;
       cursor: pointer; font-weight: bold;
       z-index: 1000;
@@ -110,41 +122,27 @@
       border-radius: 10px;
     }
 
-    /* Alexa Mode */
-    #alexa {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-size: 3em;
-      color: white;
-      z-index: 2000;
-      background-size: cover;
-      background-position: center;
-    }
-    #exit-alexa {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      border: none;
-      border-radius: 15px;
-      padding: 10px 20px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-
-    /* Confetti */
+    /* confetti realist */
     .confetti {
       position: fixed;
       width: 8px; height: 14px;
       top: -20px;
       opacity: 0.9;
-      z-index: 3000;
+      z-index: 2000;
+    }
+
+    /* Casete biblie + text */
+    .daily-checks {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 10px 0 20px 0;
+    }
+    .daily-checks label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -152,6 +150,10 @@
   <header>
     <h1>Family Calendar</h1>
     <p id="today"></p>
+    <div class="daily-checks">
+      <label><input type="checkbox" id="bibleCheck"> Citirea Bibliei</label>
+      <label><input type="checkbox" id="textCheck"> Textul zilei</label>
+    </div>
   </header>
 
   <div class="section">
@@ -173,9 +175,13 @@
 
   <div class="add-form" id="form">
     <h2>Adaugă activitate</h2>
-    <input type="text" id="desc" placeholder="Descriere">
+    <label>Descriere</label>
+    <input type="text" id="desc">
+    <label>Data</label>
     <input type="date" id="date">
+    <label>Ora</label>
     <input type="time" id="time">
+    <label>Persoane</label>
     <select id="person1">
       <option value="mama">Mama</option>
       <option value="tata">Tata</option>
@@ -190,22 +196,17 @@
     <button onclick="addEvent()">Adaugă</button>
 
     <hr>
-    <button onclick="toggleDone()">✅ Vezi activități bifate</button>
-    <button onclick="toggleTheme()">🎨 Schimbă fundal</button>
-    <input type="text" id="bgLink" placeholder="Link imagine Alexa">
-    <button onclick="toggleAlexa()">🕒 Modul Alexa</button>
-  </div>
-
-  <div id="alexa">
-    <button id="exit-alexa" onclick="toggleAlexa()">↩ Ieșire</button>
-    <div id="alexa-clock"></div>
-    <div id="alexa-date"></div>
+    <button onclick="toggleDone()">Vezi activități bifate</button>
+    <button onclick="toggleTheme()">Schimbă fundal</button>
   </div>
 
   <script>
     const todayEl = document.getElementById("today");
     const today = new Date();
     todayEl.textContent = today.toLocaleDateString("ro-RO", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
     function toggleForm() {
       document.getElementById("form").classList.toggle("open");
@@ -217,42 +218,35 @@
       document.body.classList.toggle("light");
     }
 
-    function addEvent() {
-      const desc = document.getElementById("desc").value;
-      const date = document.getElementById("date").value;
-      const time = document.getElementById("time").value;
-      const p1 = document.getElementById("person1").value;
-      const p2 = document.getElementById("person2").value;
-      if (!desc || !date || !time) return;
+    function saveEvents() {
+      const all = {
+        today: document.getElementById("today-events").innerHTML,
+        week: document.getElementById("week-events").innerHTML,
+        done: document.getElementById("done-events").innerHTML,
+        bible: document.getElementById("bibleCheck").checked,
+        text: document.getElementById("textCheck").checked,
+        savedDate: todayStr
+      };
+      localStorage.setItem("calendarEvents", JSON.stringify(all));
+    }
 
-      const div = document.createElement("div");
-      div.className = "event " + p1 + (p2 ? " " + p2 : "");
-      div.innerHTML = `
-        <div>
-          <div>${desc}</div>
-          <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>
-        </div>
-        <div class="actions">
-          <button class="done-btn">✅</button>
-          <button class="delete-btn">❌</button>
-        </div>`;
+    function loadEvents() {
+      const data = localStorage.getItem("calendarEvents");
+      if (!data) return;
+      const parsed = JSON.parse(data);
 
-      const now = new Date();
-      const d = new Date(date);
-      const diffDays = Math.floor((d - now) / (1000*60*60*24));
-
-      if (date === new Date().toISOString().split("T")[0]) {
-        document.getElementById("today-events").appendChild(div);
-      } else if (diffDays >= 0 && diffDays < 7) {
-        document.getElementById("week-events").appendChild(div);
-      } else {
-        alert("Activitatea trebuie să fie azi sau în această săptămână.");
+      // Reset dacă a trecut ziua
+      if (parsed.savedDate !== todayStr) {
+        localStorage.removeItem("calendarEvents");
         return;
       }
 
+      document.getElementById("today-events").innerHTML = parsed.today;
+      document.getElementById("week-events").innerHTML = parsed.week;
+      document.getElementById("done-events").innerHTML = parsed.done;
+      document.getElementById("bibleCheck").checked = parsed.bible;
+      document.getElementById("textCheck").checked = parsed.text;
       reattachActions();
-      saveEvents();
-      document.getElementById("desc").value = "";
     }
 
     function reattachActions() {
@@ -269,31 +263,60 @@
         btn.onclick = () => {
           btn.closest(".event").remove();
           saveEvents();
+          checkConfetti();
         };
       });
     }
 
-    function saveEvents() {
-      const all = {
-        today: document.getElementById("today-events").innerHTML,
-        week: document.getElementById("week-events").innerHTML,
-        done: document.getElementById("done-events").innerHTML
-      };
-      localStorage.setItem("calendarEvents", JSON.stringify(all));
-    }
+    function addEvent() {
+      const desc = document.getElementById("desc").value;
+      const date = document.getElementById("date").value;
+      const time = document.getElementById("time").value;
+      const p1 = document.getElementById("person1").value;
+      const p2 = document.getElementById("person2").value;
 
-    function loadEvents() {
-      const data = localStorage.getItem("calendarEvents");
-      if (!data) return;
-      const parsed = JSON.parse(data);
-      document.getElementById("today-events").innerHTML = parsed.today;
-      document.getElementById("week-events").innerHTML = parsed.week;
-      document.getElementById("done-events").innerHTML = parsed.done;
+      if (!desc || !date || !time) return;
+
+      const div = document.createElement("div");
+      div.className = "event " + p1 + (p2 ? " " + p2 : "");
+
+      const content = document.createElement("div");
+      content.innerHTML = `<div>${desc}</div>
+                           <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      actions.innerHTML = `<button class="done-btn">✅</button><button class="delete-btn">❌</button>`;
+
+      div.appendChild(content);
+      div.appendChild(actions);
+
+      const d = new Date(date);
+      const now = new Date();
+
+      const diffDays = Math.floor((d - now) / (1000*60*60*24));
+      const sameMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+
+      if (date === todayStr) {
+        document.getElementById("today-events").appendChild(div);
+      } else if (diffDays >= 0 && diffDays < 7) {
+        document.getElementById("week-events").appendChild(div);
+      } else {
+        alert("Activitatea nu e azi sau săptămâna asta.");
+        return;
+      }
+
       reattachActions();
+      saveEvents();
+
+      document.getElementById("desc").value = "";
+      document.getElementById("time").value = "";
+      document.getElementById("person2").value = "";
     }
 
     function checkConfetti() {
-      if (document.getElementById("today-events").children.length === 0) launchConfetti();
+      const todayEv = document.getElementById("today-events").children.length;
+      if (todayEv === 0) launchConfetti();
     }
 
     function launchConfetti() {
@@ -307,35 +330,23 @@
         c.style.height = Math.random() * 8 + 6 + "px";
         c.style.borderRadius = Math.random() > 0.5 ? "50%" : "0%";
         document.body.appendChild(c);
+
+        let angle = Math.random()*360;
+        let xMove = (Math.random() - 0.5) * 200;
         let fall = c.animate([
-          { transform: `translate(0,0)` },
-          { transform: `translate(${(Math.random()-0.5)*200}px, ${window.innerHeight}px)` }
-        ], { duration: 4000 + Math.random()*2000, easing: "ease-out" });
+          { transform: `translate(0,0) rotate(${angle}deg)` },
+          { transform: `translate(${xMove}px, ${window.innerHeight}px) rotate(${angle+720}deg)` }
+        ], {
+          duration: 3000 + Math.random()*2000,
+          easing: "ease-out"
+        });
         fall.onfinish = () => c.remove();
       }
     }
 
-    function toggleAlexa() {
-      const alexa = document.getElementById("alexa");
-      if (alexa.style.display === "flex") {
-        alexa.style.display = "none";
-        return;
-      }
-      const bgLink = document.getElementById("bgLink").value;
-      if (bgLink) alexa.style.backgroundImage = `url(${bgLink})`;
-      else alexa.style.background = "#000";
-      alexa.style.display = "flex";
-      updateAlexaClock();
-    }
-
-    function updateAlexaClock() {
-      const now = new Date();
-      document.getElementById("alexa-clock").textContent = now.toLocaleTimeString("ro-RO");
-      document.getElementById("alexa-date").textContent = now.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" });
-      if (document.getElementById("alexa").style.display === "flex") {
-        setTimeout(updateAlexaClock, 1000);
-      }
-    }
+    // Salvare checkbox-uri
+    document.getElementById("bibleCheck").addEventListener("change", saveEvents);
+    document.getElementById("textCheck").addEventListener("change", saveEvents);
 
     loadEvents();
   </script>

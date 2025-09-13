@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Family Calendar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.light {
+      background: #f9fafb;
+      color: #111827;
+    }
+    body.light header { background: #e5e7eb; }
+    body.light .section,
+    body.light .preview,
+    body.light .done-section,
+    body.light .add-form {
+      background: #f3f4f6;
+      color: #111827;
+    }
+    body.light .event { background: #e5e7eb; }
+    body.light .toggle-btn,
+    body.light .add-form button {
+      background: #2563eb;
+      color: white;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #1e293b;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1 { margin: 0; }
+
+    .section { padding: 20px; }
+
+    .daily-checks {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 10px;
+    }
+    .daily-checks label {
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .event {
+      position: relative;
+      background: #1e293b;
+      margin: 10px 0;
+      padding: 10px 15px 10px 20px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .event::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0;
+      width: 6px; height: 100%;
+      border-radius: 6px 0 0 6px;
+    }
+    .event.mama::before { background: hotpink; }
+    .event.tata::before { background: orange; }
+    .event.eu::before { background: lightgreen; }
+    .event.mama.tata::before { background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
+    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
+    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
+
+    .meta { font-size: 0.8em; opacity: 0.8; }
+
+    .actions { display: flex; gap: 8px; }
+    .actions button {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .add-form {
+      position: fixed;
+      top: 0; right: -270px;
+      width: 250px; height: 100%;
+      background: #1e293b;
+      padding: 20px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+      transition: right 0.3s ease;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-radius: 20px 0 0 20px;
+    }
+    .add-form.open { right: 0; }
+    .add-form h2 { margin-top: 0; }
+    .add-form label { display: block; margin-top: 5px; font-size: 14px; }
+    .add-form input, .add-form select, .add-form button {
+      width: 100%; padding: 6px; margin-top: 4px;
+      border-radius: 10px; border: none;
+    }
+    .add-form button {
+      background: #3b82f6; color: white;
+      font-weight: bold; cursor: pointer;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 10px; right: 10px;
+      background: #3b82f6; color: white;
+      border-radius: 12px;
+      padding: 8px 12px;
+      cursor: pointer; font-weight: bold;
+      z-index: 1000;
+    }
+
+    .done-section {
+      padding: 20px;
+      background: #1e293b;
+      margin-top: 20px;
+      display: none;
+      border-radius: 12px;
+    }
+    .done-section.visible { display: block; }
+
+    .event.done { opacity: 0.7; }
+
+    .preview {
+      padding: 20px;
+      margin-top: 20px;
+      background: #1e293b;
+      border-radius: 10px;
+    }
+
+    /* confetti realist */
+    .confetti {
+      position: fixed;
+      width: 8px; height: 14px;
+      top: -20px;
+      opacity: 0.9;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Family Calendar</h1>
+    <p id="today"></p>
+    <div class="daily-checks">
+      <label><input type="checkbox" id="bible"> Citirea Bibliei</label>
+      <label><input type="checkbox" id="verse"> Textul zilei</label>
+    </div>
+  </header>
+
+  <div class="section">
+    <h2>Astăzi</h2>
+    <div id="today-events"></div>
+
+    <div class="preview">
+      <h2>Săptămâna aceasta</h2>
+      <div id="week-events"></div>
+    </div>
+  </div>
+
+  <div class="done-section" id="done-section">
+    <h2>Activități finalizate</h2>
+    <div id="done-events"></div>
+  </div>
+
+  <div class="toggle-btn" onclick="toggleForm()">☰</div>
+
+  <div class="add-form" id="form">
+    <h2>Adaugă activitate</h2>
+    <label>Descriere</label>
+    <input type="text" id="desc">
+    <label>Data și ora</label>
+    <input type="datetime-local" id="datetime">
+    <label>Persoane</label>
+    <select id="person1">
+      <option value="mama">Mama</option>
+      <option value="tata">Tata</option>
+      <option value="eu">Eu</option>
+    </select>
+    <select id="person2">
+      <option value="">— nimeni —</option>
+      <option value="mama">Mama</option>
+      <option value="tata">Tata</option>
+      <option value="eu">Eu</option>
+    </select>
+    <button onclick="addEvent()">Adaugă</button>
+
+    <hr>
+    <button onclick="toggleDone()">Vezi activități bifate</button>
+    <button onclick="toggleTheme()">Schimbă fundal</button>
+  </div>
+
+  <script>
+    const todayEl = document.getElementById("today");
+    const today = new Date();
+    todayEl.textContent = today.toLocaleDateString("ro-RO", {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    function toggleForm() {
+      document.getElementById("form").classList.toggle("open");
+    }
+    function toggleDone() {
+      document.getElementById("done-section").classList.toggle("visible");
+    }
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+    }
+
+    function saveEvents() {
+      const all = {
+        today: document.getElementById("today-events").innerHTML,
+        week: document.getElementById("week-events").innerHTML,
+        done: document.getElementById("done-events").innerHTML,
+        bible: document.getElementById("bible").checked,
+        verse: document.getElementById("verse").checked,
+        theme: document.body.classList.contains("light")
+      };
+      localStorage.setItem("calendarEvents", JSON.stringify(all));
+      localStorage.setItem("lastSaveDate", todayStr);
+    }
+
+    function loadEvents() {
+      const data = localStorage.getItem("calendarEvents");
+      if (!data) return;
+      const parsed = JSON.parse(data);
+
+      // reset zilnic
+      const lastSave = localStorage.getItem("lastSaveDate");
+      if (lastSave !== todayStr) {
+        parsed.bible = false;
+        parsed.verse = false;
+      }
+
+      document.getElementById("today-events").innerHTML = parsed.today;
+      document.getElementById("week-events").innerHTML = parsed.week;
+      document.getElementById("done-events").innerHTML = parsed.done;
+      document.getElementById("bible").checked = parsed.bible;
+      document.getElementById("verse").checked = parsed.verse;
+      if (parsed.theme) document.body.classList.add("light");
+
+      reattachActions();
+    }
+
+    function reattachActions() {
+      document.querySelectorAll(".done-btn").forEach(btn => {
+        btn.onclick = () => {
+          const ev = btn.closest(".event");
+          ev.classList.add("done");
+          document.getElementById("done-events").appendChild(ev);
+          saveEvents();
+          checkConfetti();
+        };
+      });
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.onclick = () => {
+          btn.closest(".event").remove();
+          saveEvents();
+          checkConfetti();
+        };
+      });
+    }
+
+    function addEvent() {
+      const desc = document.getElementById("desc").value;
+      const datetime = document.getElementById("datetime").value;
+      const p1 = document.getElementById("person1").value;
+      const p2 = document.getElementById("person2").value;
+
+      if (!desc || !datetime) return;
+
+      const [date, time] = datetime.split("T");
+
+      const div = document.createElement("div");
+      div.className = "event " + p1 + (p2 ? " " + p2 : "");
+
+      const content = document.createElement("div");
+      content.innerHTML = `<div>${desc}</div>
+        <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      actions.innerHTML = `<button class="done-btn">✅</button>
+        <button class="delete-btn">❌</button>`;
+
+      div.appendChild(content);
+      div.appendChild(actions);
+
+      const d = new Date(date);
+      const now = new Date();
+      const diffDays = Math.floor((d - now) / (1000*60*60*24));
+
+      if (date === todayStr) {
+        document.getElementById("today-events").appendChild(div);
+      } else if (diffDays >= 0 && diffDays < 7) {
+        document.getElementById("week-events").appendChild(div);
+      } else {
+        alert("Activitatea nu e azi sau în săptămâna asta.");
+        return;
+      }
+
+      reattachActions();
+      saveEvents();
+
+      document.getElementById("desc").value = "";
+      document.getElementById("datetime").value = "";
+      document.getElementById("person2").value = "";
+    }
+
+    function checkConfetti() {
+      const todayEv = document.getElementById("today-events").children.length;
+      if (todayEv === 0) launchConfetti();
+    }
+
+    function launchConfetti() {
+      const colors = ["#f87171","#facc15","#4ade80","#60a5fa","#c084fc","#f472b6"];
+      for (let i = 0; i < 80; i++) {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        c.style.left = Math.random() * window.innerWidth + "px";
+        c.style.background = colors[Math.floor(Math.random()*colors.length)];
+        c.style.width = Math.random() * 8 + 6 + "px";
+        c.style.height = Math.random() * 8 + 6 + "px";
+        c.style.borderRadius = Math.random() > 0.5 ? "50%" : "0%";
+        document.body.appendChild(c);
+
+        let angle = Math.random()*360;
+        let xMove = (Math.random() - 0.5) * 200;
+        let fall = c.animate([
+          { transform: `translate(0,0) rotate(${angle}deg)` },
+          { transform: `translate(${xMove}px, ${window.innerHeight}px) rotate(${angle+720}deg)` }
+        ], {
+          duration: 3000 + Math.random()*2000,
+          easing: "ease-out"
+        });
+        fall.onfinish = () => c.remove();
+      }
+    }
+
+    document.getElementById("bible").addEventListener("change", saveEvents);
+    document.getElementById("verse").addEventListener("change", saveEvents);
+
+    loadEvents();
+  </script>
+</body>
+</html>

@@ -13,58 +13,42 @@
       overflow-x: hidden;
       transition: background 0.3s, color 0.3s;
     }
-
-    body.light {
-      background: #f9fafb;
-      color: #111827;
-    }
-    body.light header { background: #e5e7eb; }
-    body.light .section,
-    body.light .preview,
+    body.light { background: white; color: black; }
+    body.light header { background: #e2e8f0; }
+    body.light .event, 
+    body.light .add-form,
     body.light .done-section,
-    body.light .add-form {
-      background: #f3f4f6;
-      color: #111827;
-    }
-    body.light .event { background: #e5e7eb; }
-    body.light .toggle-btn,
-    body.light .add-form button {
-      background: #2563eb;
-      color: white;
-    }
+    body.light .preview { background: #f1f5f9; color: black; }
 
     header {
       text-align: center;
       padding: 20px;
       background: #1e293b;
-      transition: background 0.3s, color 0.3s;
     }
     h1 { margin: 0; }
 
     .section { padding: 20px; }
-
-    .daily-checks {
+    .checkboxes {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 12px;
+      background: #1e293b;
       display: flex;
+      gap: 20px;
       justify-content: center;
-      gap: 30px;
-      margin-top: 10px;
     }
-    .daily-checks label {
-      font-size: 16px;
-      cursor: pointer;
-    }
+    .checkboxes label { cursor: pointer; }
 
     .event {
       position: relative;
       background: #1e293b;
       margin: 10px 0;
       padding: 10px 15px 10px 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-
     .event::before {
       content: "";
       position: absolute;
@@ -75,12 +59,8 @@
     .event.mama::before { background: hotpink; }
     .event.tata::before { background: orange; }
     .event.eu::before { background: lightgreen; }
-    .event.mama.tata::before { background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
-    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
-    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
 
     .meta { font-size: 0.8em; opacity: 0.8; }
-
     .actions { display: flex; gap: 8px; }
     .actions button {
       background: transparent;
@@ -92,8 +72,8 @@
 
     .add-form {
       position: fixed;
-      top: 0; right: -270px;
-      width: 250px; height: 100%;
+      top: 0; right: -280px;
+      width: 260px; height: 100%;
       background: #1e293b;
       padding: 20px;
       box-shadow: -2px 0 5px rgba(0,0,0,0.5);
@@ -102,13 +82,15 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      border-radius: 20px 0 0 20px;
+      border-radius: 15px 0 0 15px;
+      overflow-y: auto;
     }
     .add-form.open { right: 0; }
     .add-form h2 { margin-top: 0; }
-    .add-form label { display: block; margin-top: 5px; font-size: 14px; }
-    .add-form input, .add-form select, .add-form button {
-      width: 100%; padding: 6px; margin-top: 4px;
+    .add-form input, 
+    .add-form select, 
+    .add-form button {
+      width: 100%; padding: 8px; margin-top: 4px;
       border-radius: 10px; border: none;
     }
     .add-form button {
@@ -134,14 +116,13 @@
       border-radius: 12px;
     }
     .done-section.visible { display: block; }
-
     .event.done { opacity: 0.7; }
 
     .preview {
       padding: 20px;
       margin-top: 20px;
       background: #1e293b;
-      border-radius: 10px;
+      border-radius: 12px;
     }
 
     /* confetti realist */
@@ -158,13 +139,14 @@
   <header>
     <h1>Family Calendar</h1>
     <p id="today"></p>
-    <div class="daily-checks">
-      <label><input type="checkbox" id="bible"> Citirea Bibliei</label>
-      <label><input type="checkbox" id="verse"> Textul zilei</label>
-    </div>
   </header>
 
   <div class="section">
+    <div class="checkboxes">
+      <label><input type="checkbox" id="bible"> Citirea Bibliei</label>
+      <label><input type="checkbox" id="text"> Textul zilei</label>
+    </div>
+
     <h2>Astăzi</h2>
     <div id="today-events"></div>
 
@@ -231,11 +213,10 @@
         week: document.getElementById("week-events").innerHTML,
         done: document.getElementById("done-events").innerHTML,
         bible: document.getElementById("bible").checked,
-        verse: document.getElementById("verse").checked,
-        theme: document.body.classList.contains("light")
+        text: document.getElementById("text").checked,
+        lastSave: new Date().toDateString()
       };
       localStorage.setItem("calendarEvents", JSON.stringify(all));
-      localStorage.setItem("lastSaveDate", todayStr);
     }
 
     function loadEvents() {
@@ -243,19 +224,16 @@
       if (!data) return;
       const parsed = JSON.parse(data);
 
-      // reset zilnic
-      const lastSave = localStorage.getItem("lastSaveDate");
-      if (lastSave !== todayStr) {
-        parsed.bible = false;
-        parsed.verse = false;
+      if (parsed.lastSave !== new Date().toDateString()) {
+        localStorage.removeItem("calendarEvents");
+        return;
       }
 
       document.getElementById("today-events").innerHTML = parsed.today;
       document.getElementById("week-events").innerHTML = parsed.week;
       document.getElementById("done-events").innerHTML = parsed.done;
       document.getElementById("bible").checked = parsed.bible;
-      document.getElementById("verse").checked = parsed.verse;
-      if (parsed.theme) document.body.classList.add("light");
+      document.getElementById("text").checked = parsed.text;
 
       reattachActions();
     }
@@ -288,6 +266,10 @@
       if (!desc || !datetime) return;
 
       const [date, time] = datetime.split("T");
+      if (!date || !time) {
+        alert("Selectează o dată și o oră!");
+        return;
+      }
 
       const div = document.createElement("div");
       div.className = "event " + p1 + (p2 ? " " + p2 : "");
@@ -298,14 +280,14 @@
 
       const actions = document.createElement("div");
       actions.className = "actions";
-      actions.innerHTML = `<button class="done-btn">✅</button>
-        <button class="delete-btn">❌</button>`;
+      actions.innerHTML = `<button class="done-btn">✅</button><button class="delete-btn">❌</button>`;
 
       div.appendChild(content);
       div.appendChild(actions);
 
       const d = new Date(date);
       const now = new Date();
+
       const diffDays = Math.floor((d - now) / (1000*60*60*24));
 
       if (date === todayStr) {
@@ -313,7 +295,7 @@
       } else if (diffDays >= 0 && diffDays < 7) {
         document.getElementById("week-events").appendChild(div);
       } else {
-        alert("Activitatea nu e azi sau în săptămâna asta.");
+        alert("Activitatea nu e azi sau săptămâna aceasta.");
         return;
       }
 
@@ -355,8 +337,8 @@
       }
     }
 
-    document.getElementById("bible").addEventListener("change", saveEvents);
-    document.getElementById("verse").addEventListener("change", saveEvents);
+    document.getElementById("bible").onchange = saveEvents;
+    document.getElementById("text").onchange = saveEvents;
 
     loadEvents();
   </script>

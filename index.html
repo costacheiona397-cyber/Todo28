@@ -1,319 +1,395 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
   <title>Family Calendar</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-      transition: background 0.3s, color 0.3s;
+    :root{
+      --bg:#0f172a; --panel:#1e293b; --card:#111827; --text:#E7ECF2;
+      --accent:#3b82f6;
     }
-    body.light { background: white; color: black; }
-    body.light header { background: #e2e8f0; }
-    body.light .event { background: #f1f5f9; color: black; }
-    body.light .add-form { background: #f1f5f9; color: black; }
-    body.light .done-section { background: #f1f5f9; color: black; }
-    body.light .preview { background: #f1f5f9; color: black; }
+    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);transition: background .25s,color .25s;}
+    body.light{ --bg:#f9fafb; --panel:#e5e7eb; --card:#f3f4f6; --text:#111827; --accent:#2563eb; }
 
-    header {
-      text-align: center;
-      padding: 20px;
-      background: #1e293b;
-    }
-    h1 { margin: 0; }
-    .section { padding: 20px; }
+    header{background:var(--panel); padding:18px 12px; text-align:center;}
+    header h1{margin:0; font-size:20px;}
+    header p{margin:6px 0 0; opacity:.9; font-size:13px;}
 
-    .event {
-      position: relative;
-      background: #1e293b;
-      margin: 10px 0;
-      padding: 10px 15px 10px 20px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .event::before {
-      content: "";
-      position: absolute;
-      left: 0; top: 0;
-      width: 6px; height: 100%;
-      border-radius: 6px 0 0 6px;
-    }
-    .event.mama::before { background: hotpink; }
-    .event.tata::before { background: orange; }
-    .event.eu::before { background: lightgreen; }
-    .event.mama.tata::before { background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
-    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
-    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
+    .container{padding:14px; max-width:1100px; margin:0 auto;}
+    h2{margin:12px 0 8px; font-size:16px;}
 
-    .event.done {
-      background: white !important;
-      color: black !important;
-    }
+    /* daily checks */
+    .daily-checks{ display:flex; gap:18px; justify-content:center; margin-bottom:12px; padding:8px;border-radius:10px;background:var(--panel); }
+    .daily-checks label{font-size:14px; cursor:pointer; display:flex; align-items:center; gap:8px;}
 
-    .meta { font-size: 0.8em; opacity: 0.8; }
-    .actions { display: flex; gap: 8px; }
-    .actions button {
-      background: transparent;
-      border: none;
-      color: inherit;
-      font-size: 18px;
-      cursor: pointer;
-    }
+    /* event card */
+    .event{ position:relative; background:var(--card); border-radius:12px; padding:10px 14px; margin:8px 0; display:flex; justify-content:space-between; align-items:center; gap:12px; box-sizing:border-box; }
+    .event::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:8px; border-radius:8px 0 0 8px; }
+    .event.mama::before{ background: hotpink; }
+    .event.tata::before{ background: orange; }
+    .event.eu::before{ background: lightgreen; }
+    .event.mama.tata::before{ background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
+    .event.mama.eu::before{ background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
+    .event.tata.eu::before{ background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
 
-    .add-form {
-      position: fixed;
-      top: 0; right: -270px;
-      width: 250px; height: 100%;
-      background: #1e293b;
-      padding: 20px;
-      box-shadow: -2px 0 5px rgba(0,0,0,0.5);
-      transition: right 0.3s ease;
-      z-index: 999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      border-radius: 12px 0 0 12px;
-    }
-    .add-form.open { right: 0; }
-    .add-form h2 { margin-top: 0; }
-    .add-form label { display: block; margin-top: 5px; font-size: 14px; }
-    .add-form input, .add-form select, .add-form button {
-      width: 100%; padding: 8px; margin-top: 4px;
-      border-radius: 8px; border: none;
-    }
-    .add-form button {
-      background: #3b82f6; color: white;
-      font-weight: bold; cursor: pointer;
-    }
+    .event .left{ display:flex; flex-direction:column; gap:6px; max-width:72%; }
+    .event .title{ font-weight:700; word-break:break-word; }
+    .event .meta{ font-size:13px; opacity:.85; }
 
-    .toggle-btn {
-      position: fixed;
-      top: 10px; right: 10px;
-      background: #3b82f6; color: white;
-      border-radius: 8px;
-      padding: 8px 12px;
-      cursor: pointer; font-weight: bold;
-      z-index: 1000;
-    }
+    .actions{ display:flex; gap:8px; align-items:center; }
+    .actions button{ background:transparent; border:none; color:inherit; font-size:18px; cursor:pointer; padding:6px; border-radius:8px; }
 
-    .done-section {
-      padding: 20px;
-      background: #1e293b;
-      margin-top: 20px;
-      display: none;
-      border-radius: 12px;
-    }
-    .done-section.visible { display: block; }
+    /* done style (white background) */
+    .event.done{ background:#ffffff !important; color:#000000 !important; }
+    .event.done .meta{ opacity:0.8; color: #111; }
+    body.light .event.done{ background:#ffffff !important; color:#000 !important; }
 
-    .preview {
-      padding: 20px;
-      margin-top: 20px;
-      background: #1e293b;
-      border-radius: 12px;
-    }
+    /* containers */
+    .list{ margin-bottom:10px; }
+    .preview{ background:var(--panel); padding:12px; border-radius:12px; margin-top:10px; display:none; }
+    .preview.visible{ display:block; }
 
-    .confetti {
-      position: fixed;
-      width: 8px; height: 14px;
-      top: -20px;
-      opacity: 0.9;
-      z-index: 2000;
+    /* side menu (add form) */
+    .toggle-btn{ position:fixed; top:12px; right:12px; z-index:1200; background:var(--accent); color:white; border-radius:12px; padding:10px 12px; cursor:pointer; font-weight:700; box-shadow:0 6px 14px rgba(0,0,0,.25); }
+    .panel{ position:fixed; right:-340px; top:0; width:340px; height:100vh; background:var(--panel); box-shadow:-6px 0 28px rgba(0,0,0,.35); padding:16px; transition:right .28s; z-index:1100; display:flex; flex-direction:column; gap:12px; overflow:auto; }
+    .panel.open{ right:0; }
+    .panel h3{ margin:0; }
+    .panel label{ font-size:13px; margin-top:8px; display:block; opacity:.95; }
+    .panel input, .panel select, .panel button, .panel .small{ width:100%; padding:10px; border-radius:12px; border:none; box-sizing:border-box; }
+    .panel .group{ display:flex; gap:8px; }
+    .panel .group select, .panel .group input[type="datetime-local"]{ flex:1; }
+
+    .panel button.primary{ background:#10b981; color:white; font-weight:700; }
+    .panel button.row{ background:var(--accent); color:white; border-radius:12px; padding:10px; font-weight:700; cursor:pointer; }
+
+    footer{ height:56px; display:flex; align-items:center; justify-content:center; gap:10px; padding-bottom:8px; color:var(--text); opacity:.95; }
+
+    /* small scrollbar for panel */
+    .panel::-webkit-scrollbar{ width:8px; } .panel::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.06); border-radius:8px; }
+
+    /* confetti */
+    .confetti{ position:fixed; top:-20px; z-index:2200; pointer-events:none; }
+
+    /* responsive */
+    @media (max-width:900px){
+      .panel{ width:92%; right:-100%; border-radius:0; }
+      .panel.open{ right:0; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Family Calendar</h1>
-    <p id="today"></p>
-  </header>
+  <div class="toggle-btn" id="openMenu">☰</div>
 
-  <div class="section">
-    <h2>Astăzi</h2>
-    <div id="today-events"></div>
+  <div class="panel" id="panel">
+    <h3>Meniu</h3>
 
-    <div class="preview">
-      <h2>Săptămâna aceasta</h2>
-      <div id="week-events"></div>
+    <button class="row" id="showAddBtn">Adaugă activitate</button>
+    <button class="row" id="showDoneBtn">Vezi activități bifate</button>
+    <button class="row" id="toggleWeekBtn">Săptămâna aceasta</button>
+    <button class="row" id="themeBtn">Schimbă fundal</button>
+
+    <hr/>
+
+    <div id="addArea" style="display:none;">
+      <label>Descriere</label>
+      <input id="titleInput" placeholder="Titlu..." />
+      <label>Dată & oră</label>
+      <input id="datetimeInput" type="datetime-local" />
+      <label>Persoane (poți alege 2)</label>
+      <div class="group">
+        <select id="person1"><option value="mama">Mama</option><option value="tata">Tata</option><option value="eu">Eu</option></select>
+        <select id="person2"><option value="">— nimeni —</option><option value="mama">Mama</option><option value="tata">Tata</option><option value="eu">Eu</option></select>
+      </div>
+      <button class="primary" id="addBtn">Adaugă</button>
+    </div>
+
+    <hr/>
+    <div style="font-size:13px; opacity:.9;">
+      <div><strong>Casete zilnice</strong></div>
+      <label><input type="checkbox" id="bibleChk"> Citirea Bibliei</label>
+      <label><input type="checkbox" id="textChk"> Textul zilei</label>
+    </div>
+
+    <hr/>
+    <div style="font-size:13px; opacity:.9;">
+      <div><strong>Despre</strong></div>
+      <div class="small">Aplicație locală. Setările și activitățile se păstrează în browserul tău.</div>
     </div>
   </div>
 
-  <div class="done-section" id="done-section">
-    <h2>Activități finalizate</h2>
-    <div id="done-events"></div>
-  </div>
+  <header>
+    <h1>Family Calendar</h1>
+    <p id="todayLabel"></p>
+  </header>
 
-  <div class="toggle-btn" onclick="toggleForm()">☰</div>
+  <main class="container" id="mainContent">
+    <div class="daily-checks" id="dailyChecksRow">
+      <label><input type="checkbox" id="bibleTop"> Citirea Bibliei</label>
+      <label><input type="checkbox" id="textTop"> Textul zilei</label>
+    </div>
 
-  <div class="add-form" id="form">
-    <h2>Adaugă activitate</h2>
-    <label>Descriere</label>
-    <input type="text" id="desc">
-    <label>Data și ora</label>
-    <input type="datetime-local" id="datetime">
-    <label>Persoane</label>
-    <select id="person1">
-      <option value="mama">Mama</option>
-      <option value="tata">Tata</option>
-      <option value="eu">Eu</option>
-    </select>
-    <select id="person2">
-      <option value="">— nimeni —</option>
-      <option value="mama">Mama</option>
-      <option value="tata">Tata</option>
-      <option value="eu">Eu</option>
-    </select>
-    <button onclick="addEvent()">Adaugă</button>
+    <h2>Astăzi</h2>
+    <div id="todayList" class="list"></div>
 
-    <hr>
-    <button onclick="toggleDone()">Vezi activități bifate</button>
-    <button onclick="toggleTheme()">Schimbă fundal</button>
-  </div>
+    <div class="preview" id="weekPreview">
+      <h2>Săptămâna aceasta</h2>
+      <div id="weekGrid"></div>
+    </div>
 
-  <script>
-    const todayEl = document.getElementById("today");
-    const today = new Date();
-    todayEl.textContent = today.toLocaleDateString("ro-RO", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    <div class="done-section" id="doneSection" style="margin-top:18px;">
+      <h3>Activități finalizate</h3>
+      <div id="doneList"></div>
+    </div>
+  </main>
 
-    const todayStr = new Date().toISOString().split("T")[0];
+  <footer>Family Calendar — local</footer>
 
-    function toggleForm() { document.getElementById("form").classList.toggle("open"); }
-    function toggleDone() { document.getElementById("done-section").classList.toggle("visible"); }
-    function toggleTheme() { document.body.classList.toggle("light"); }
+<script>
+/* ======== Data model & persistence ======== */
+const STORAGE_KEY = 'family_calendar_v3';
+let events = [];      // active events (not done)
+let doneEvents = [];  // finished
+let settings = { themeLight:false, bible:false, text:false };
 
-    function saveEvents() {
-      const all = {
-        today: document.getElementById("today-events").innerHTML,
-        week: document.getElementById("week-events").innerHTML,
-        done: document.getElementById("done-events").innerHTML
-      };
-      localStorage.setItem("calendarEvents", JSON.stringify(all));
-    }
+/* helpers */
+function uid(){ return 'id'+Math.random().toString(36).slice(2,9); }
+function isoDate(d){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()).toISOString().split('T')[0]; }
+function nowISO(){ return new Date().toISOString(); }
+function isSameDayISO(isoA, isoB){
+  return isoA.split('T')[0] === isoB.split('T')[0];
+}
+function todayDateISO(){ return new Date().toISOString().split('T')[0]; }
 
-    function loadEvents() {
-      const data = localStorage.getItem("calendarEvents");
-      if (!data) return;
-      const parsed = JSON.parse(data);
-      document.getElementById("today-events").innerHTML = parsed.today;
-      document.getElementById("week-events").innerHTML = parsed.week;
-      document.getElementById("done-events").innerHTML = parsed.done;
-      reattachActions();
-    }
+/* save / load */
+function saveAll(){
+  const payload = { events, doneEvents, settings, savedAt: nowISO() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+function loadAll(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return;
+  try{
+    const parsed = JSON.parse(raw);
+    events = parsed.events || [];
+    doneEvents = parsed.doneEvents || [];
+    settings = Object.assign(settings, parsed.settings || {});
+    // apply theme & daily checks
+    if(settings.themeLight) document.body.classList.add('light');
+    document.getElementById('bibleTop').checked = settings.bible;
+    document.getElementById('textTop').checked = settings.text;
+    document.getElementById('bibleChk').checked = settings.bible;
+    document.getElementById('textChk').checked = settings.text;
+  }catch(e){ console.warn('load error', e); }
+}
 
-    function reattachActions() {
-      document.querySelectorAll(".done-btn").forEach(btn => {
-        btn.onclick = () => {
-          const ev = btn.closest(".event");
-          ev.classList.add("done");
-          document.getElementById("done-events").appendChild(ev);
-          saveEvents();
-          checkConfetti();
-        };
-      });
-      document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.onclick = () => {
-          btn.closest(".event").remove();
-          saveEvents();
-          checkConfetti();
-        };
-      });
-    }
+/* ======== UI element creation ======== */
+function makeEventEl(ev){
+  const wrapper = document.createElement('div');
+  wrapper.className = 'event ' + (ev.members ? ev.members.join(' ') : '');
+  if(ev.done) wrapper.classList.add('done');
+  wrapper.dataset.id = ev.id;
+  wrapper.dataset.datetime = ev.datetime;
 
-    function addEvent() {
-      const desc = document.getElementById("desc").value;
-      const datetime = document.getElementById("datetime").value;
-      const p1 = document.getElementById("person1").value;
-      const p2 = document.getElementById("person2").value;
+  const left = document.createElement('div'); left.className='left';
+  const title = document.createElement('div'); title.className='title'; title.textContent = ev.title;
+  const meta = document.createElement('div'); meta.className='meta';
+  // format date/time for display
+  const d = new Date(ev.datetime);
+  const dateStr = d.toISOString().split('T')[0];
+  const timeStr = d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+  meta.textContent = `${dateStr} — ${timeStr} — ${ev.members.join(', ')}`;
+  left.appendChild(title); left.appendChild(meta);
 
-      if (!desc || !datetime) return;
+  const actions = document.createElement('div'); actions.className='actions';
+  const doneBtn = document.createElement('button'); doneBtn.innerHTML = '✅'; doneBtn.title='Marchează ca terminat';
+  const delBtn = document.createElement('button'); delBtn.innerHTML='❌'; delBtn.title='Șterge';
+  actions.appendChild(doneBtn); actions.appendChild(delBtn);
 
-      const [date, time] = datetime.split("T");
-      const div = document.createElement("div");
-      div.className = "event " + p1 + (p2 ? " " + p2 : "");
+  doneBtn.addEventListener('click', ()=> markDone(ev.id));
+  delBtn.addEventListener('click', ()=> removeEvent(ev.id));
 
-      const content = document.createElement("div");
-      content.innerHTML = `<div>${desc}</div>
-                           <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
+  wrapper.appendChild(left); wrapper.appendChild(actions);
+  return wrapper;
+}
 
-      const actions = document.createElement("div");
-      actions.className = "actions";
-      actions.innerHTML = `<button class="done-btn">✅</button><button class="delete-btn">❌</button>`;
+/* ======== Rendering ======== */
+function renderAll(){
+  renderToday();
+  renderWeek();
+  renderDone();
+  saveAll();
+}
 
-      div.appendChild(content);
-      div.appendChild(actions);
+function renderToday(){
+  const today = todayDateISO();
+  const container = document.getElementById('todayList'); container.innerHTML = '';
+  // sort events by datetime
+  const todays = events.filter(e => e.datetime.split('T')[0] === today).sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));
+  todays.forEach(ev=> container.appendChild(makeEventEl(ev)));
+  // attach styling for done items if any inside events (shouldn't be)
+}
+function renderWeek(){
+  const grid = document.getElementById('weekGrid'); grid.innerHTML = '';
+  const now = new Date();
+  // show 7 columns (Mon-Sun style starting today)
+  for(let i=0;i<7;i++){
+    const day = new Date(); day.setDate(now.getDate()+i);
+    const iso = day.toISOString().split('T')[0];
+    const col = document.createElement('div'); col.style.marginBottom='12px';
+    const header = document.createElement('div'); header.style.fontWeight='700'; header.style.marginBottom='6px';
+    header.textContent = day.toLocaleDateString('ro-RO',{weekday:'short', day:'numeric'});
+    col.appendChild(header);
+    const dayEvents = events.filter(e => e.datetime.split('T')[0] === iso).sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));
+    dayEvents.forEach(ev => col.appendChild(makeEventEl(ev)));
+    grid.appendChild(col);
+  }
+}
+function renderDone(){
+  const container = document.getElementById('doneList'); container.innerHTML = '';
+  // sort done by completed datetime (we stored as datetime originally) ascending
+  const sorted = doneEvents.slice().sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));
+  sorted.forEach(ev=>{
+    const el = makeEventEl(ev);
+    el.classList.add('done');
+    // change action: keep delete only
+    const actions = el.querySelector('.actions');
+    actions.innerHTML = '<button class="delete-only">❌</button>';
+    actions.querySelector('.delete-only').addEventListener('click', ()=> removeDone(ev.id));
+    container.appendChild(el);
+  });
+}
 
-      const d = new Date(datetime);
-      const now = new Date();
-      const diffDays = Math.floor((d - now) / (1000*60*60*24));
+/* ======== Operations ======== */
+function addNewEvent({title, datetime, members}){
+  const id = uid();
+  const ev = { id, title, datetime, members, done:false };
+  events.push(ev);
+  sortAndRenderAll();
+}
+function markDone(id){
+  // find in events
+  const i = events.findIndex(e=>e.id===id);
+  if(i===-1) return;
+  const ev = events.splice(i,1)[0];
+  ev.done = true;
+  doneEvents.unshift(ev);
+  sortAndRenderAll();
+  // confetti check: if no active today events left but some done today -> launch
+  setTimeout(checkConfetti, 120);
+}
+function removeEvent(id){
+  events = events.filter(e=>e.id!==id);
+  sortAndRenderAll();
+}
+function removeDone(id){
+  doneEvents = doneEvents.filter(e=>e.id!==id);
+  saveAll(); renderDone();
+}
+function sortAndRenderAll(){
+  // sort events array by datetime
+  events.sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));
+  renderAll();
+}
 
-      if (date === todayStr) {
-        document.getElementById("today-events").appendChild(div);
-      } else if (diffDays >= 0 && diffDays < 7) {
-        document.getElementById("week-events").appendChild(div);
-      } else {
-        alert("Activitatea nu e azi sau în această săptămână.");
-        return;
-      }
+/* ======== Confetti realistic ======== */
+function launchConfetti(){
+  const colors = ['#f87171','#facc15','#4ade80','#60a5fa','#c084fc','#f472b6','#ffb84d','#ffd166'];
+  const count = 80;
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div'); el.className='confetti';
+    const w = Math.random()*10 + 6; const h = Math.random()*6 + 6;
+    el.style.width = w+'px'; el.style.height = h+'px';
+    el.style.left = Math.random()*window.innerWidth + 'px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = 0.95; el.style.borderRadius = Math.random()>0.6 ? '50%' : '2px';
+    document.body.appendChild(el);
+    const totalDur = 2500 + Math.random()*1800;
+    const rotate = (Math.random()*720) + 180;
+    const xOffset = (Math.random()-0.5) * (window.innerWidth * 0.4);
+    const endY = window.innerHeight + 50 + Math.random()*200;
+    const startX = parseFloat(el.style.left);
+    const endX = Math.min(Math.max(startX + xOffset, -100), window.innerWidth+100);
+    el.animate([
+      { transform:`translate(0,0) rotate(0deg)`, opacity:1 },
+      { transform:`translate(${(endX-startX)}px, ${endY}px) rotate(${rotate}deg)`, opacity:0.9 }
+    ], { duration: totalDur, easing: 'cubic-bezier(.17,.67,.3,1)' });
+    setTimeout(()=>el.remove(), totalDur+50);
+  }
+}
+function checkConfetti(){
+  const today = todayDateISO();
+  const activeTodayCount = events.filter(e=>e.datetime.split('T')[0]===today).length;
+  const doneTodayCount = doneEvents.filter(e=>e.datetime.split('T')[0]===today).length;
+  // play confetti when there are no active events today AND at least one done today
+  if(activeTodayCount===0 && doneTodayCount>0) launchConfetti();
+}
 
-      reattachActions();
-      sortEvents("today-events");
-      sortEvents("week-events");
-      saveEvents();
+/* ======== UI wiring ======== */
+document.getElementById('openMenu').addEventListener('click', ()=> document.getElementById('panel').classList.toggle('open'));
+document.getElementById('showAddBtn').addEventListener('click', ()=> {
+  document.getElementById('addArea').style.display = document.getElementById('addArea').style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('showDoneBtn').addEventListener('click', ()=> document.getElementById('doneSection').classList.toggle('visible'));
+document.getElementById('toggleWeekBtn').addEventListener('click', ()=> document.getElementById('weekPreview').classList.toggle('visible'));
+document.getElementById('themeBtn').addEventListener('click', ()=> {
+  settings.themeLight = !settings.themeLight;
+  if(settings.themeLight) document.body.classList.add('light'); else document.body.classList.remove('light');
+  saveAll();
+});
 
-      document.getElementById("desc").value = "";
-      document.getElementById("datetime").value = "";
-      document.getElementById("person2").value = "";
-    }
+/* add event button */
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const title = document.getElementById('titleInput').value.trim();
+  const dt = document.getElementById('datetimeInput').value;
+  const p1 = document.getElementById('person1').value;
+  const p2 = document.getElementById('person2').value;
+  if(!title || !dt){ alert('Completează titlu și dată/oră'); return; }
+  const members = (p2 && p2 !== p1) ? [p1,p2] : [p1];
+  addNewEvent({ title, datetime: dt, members });
+  document.getElementById('titleInput').value=''; document.getElementById('datetimeInput').value=''; document.getElementById('person2').value='';
+  saveAll();
+});
 
-    function sortEvents(containerId) {
-      const container = document.getElementById(containerId);
-      const events = Array.from(container.children);
-      events.sort((a, b) => {
-        const ta = a.querySelector(".meta").textContent.split("—")[1]?.trim() || "";
-        const tb = b.querySelector(".meta").textContent.split("—")[1]?.trim() || "";
-        return ta.localeCompare(tb);
-      });
-      container.innerHTML = "";
-      events.forEach(ev => container.appendChild(ev));
-    }
+/* daily checks tie to settings */
+['bibleTop','textTop','bibleChk','textChk'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('change', ()=>{
+    // mirror states across both display checkboxes
+    const bible = document.getElementById('bibleTop').checked || document.getElementById('bibleChk').checked;
+    const text = document.getElementById('textTop').checked || document.getElementById('textChk').checked;
+    document.getElementById('bibleTop').checked = document.getElementById('bibleChk').checked = bible;
+    document.getElementById('textTop').checked = document.getElementById('textChk').checked = text;
+    settings.bible = bible; settings.text = text;
+    saveAll();
+  });
+});
 
-    function checkConfetti() {
-      const todayEv = document.getElementById("today-events").children.length;
-      if (todayEv === 0) launchConfetti();
-    }
+/* ======== Reset daily checks at midnight ======== */
+function scheduleDailyReset(){
+  const now = new Date();
+  const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0) - now;
+  setTimeout(()=>{
+    settings.bible = false; settings.text = false;
+    document.getElementById('bibleTop').checked = document.getElementById('bibleChk').checked = false;
+    document.getElementById('textTop').checked = document.getElementById('textChk').checked = false;
+    saveAll();
+    scheduleDailyReset();
+  }, msUntilMidnight + 200); // small buffer
+}
+scheduleDailyReset();
 
-    function launchConfetti() {
-      const colors = ["#f87171","#facc15","#4ade80","#60a5fa","#c084fc","#f472b6"];
-      for (let i = 0; i < 80; i++) {
-        const c = document.createElement("div");
-        c.className = "confetti";
-        c.style.left = Math.random() * window.innerWidth + "px";
-        c.style.background = colors[Math.floor(Math.random()*colors.length)];
-        c.style.width = Math.random() * 8 + 6 + "px";
-        c.style.height = Math.random() * 8 + 6 + "px";
-        c.style.borderRadius = Math.random() > 0.5 ? "50%" : "0%";
-        document.body.appendChild(c);
+/* ======== Remove / mark functions that also save/render ======== */
+// already implemented above: markDone, removeEvent, removeDone
 
-        let angle = Math.random()*360;
-        let xMove = (Math.random() - 0.5) * 200;
-        let fall = c.animate([
-          { transform: `translate(0,0) rotate(${angle}deg)` },
-          { transform: `translate(${xMove}px, ${window.innerHeight}px) rotate(${angle+720}deg)` }
-        ], {
-          duration: 3000 + Math.random()*2000,
-          easing: "ease-out"
-        });
-        fall.onfinish = () => c.remove();
-      }
-    }
+/* ======== Load on start ======== */
+document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('ro-RO',{ weekday:'long', day:'numeric', month:'long', year:'numeric' });
+loadAll();
+sortAndRenderAll();
 
-    loadEvents();
-  </script>
+/* expose for debugging (optional) */
+window._fc = { events, doneEvents, settings, saveAll, renderAll };
+</script>
 </body>
 </html>

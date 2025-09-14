@@ -13,12 +13,17 @@
       overflow-x: hidden;
       transition: background 0.3s, color 0.3s;
     }
-    body.light { background: white; color: black; }
-    body.light header { background: #e2e8f0; }
-    body.light .event, 
+    body.light {
+      background: #f9fafb;
+      color: #111827;
+    }
+    body.light header { background: #e5e7eb; }
+    body.light .event { background: #e5e7eb; }
     body.light .add-form,
     body.light .done-section,
-    body.light .preview { background: #f1f5f9; color: black; }
+    body.light .preview {
+      background: #f3f4f6; color: #111827;
+    }
 
     header {
       text-align: center;
@@ -28,23 +33,13 @@
     h1 { margin: 0; }
 
     .section { padding: 20px; }
-    .checkboxes {
-      margin-bottom: 20px;
-      padding: 10px;
-      border-radius: 12px;
-      background: #1e293b;
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-    }
-    .checkboxes label { cursor: pointer; }
 
     .event {
       position: relative;
       background: #1e293b;
       margin: 10px 0;
-      padding: 10px 15px 10px 20px;
-      border-radius: 12px;
+      padding: 10px 15px;
+      border-radius: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -59,8 +54,12 @@
     .event.mama::before { background: hotpink; }
     .event.tata::before { background: orange; }
     .event.eu::before { background: lightgreen; }
+    .event.mama.tata::before { background: linear-gradient(to bottom, hotpink 50%, orange 50%); }
+    .event.mama.eu::before { background: linear-gradient(to bottom, hotpink 50%, lightgreen 50%); }
+    .event.tata.eu::before { background: linear-gradient(to bottom, orange 50%, lightgreen 50%); }
 
     .meta { font-size: 0.8em; opacity: 0.8; }
+
     .actions { display: flex; gap: 8px; }
     .actions button {
       background: transparent;
@@ -82,16 +81,14 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      border-radius: 15px 0 0 15px;
       overflow-y: auto;
     }
     .add-form.open { right: 0; }
     .add-form h2 { margin-top: 0; }
-    .add-form input, 
-    .add-form select, 
-    .add-form button {
-      width: 100%; padding: 8px; margin-top: 4px;
-      border-radius: 10px; border: none;
+    .add-form label { display: block; margin-top: 5px; font-size: 14px; }
+    .add-form input, .add-form select, .add-form button {
+      width: 100%; padding: 6px; margin-top: 4px;
+      border-radius: 8px; border: none;
     }
     .add-form button {
       background: #3b82f6; color: white;
@@ -102,7 +99,7 @@
       position: fixed;
       top: 10px; right: 10px;
       background: #3b82f6; color: white;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 8px 12px;
       cursor: pointer; font-weight: bold;
       z-index: 1000;
@@ -113,19 +110,20 @@
       background: #1e293b;
       margin-top: 20px;
       display: none;
-      border-radius: 12px;
     }
     .done-section.visible { display: block; }
+
     .event.done { opacity: 0.7; }
 
     .preview {
       padding: 20px;
       margin-top: 20px;
       background: #1e293b;
-      border-radius: 12px;
+      border-radius: 10px;
+      display: none;
     }
+    .preview.visible { display: block; }
 
-    /* confetti realist */
     .confetti {
       position: fixed;
       width: 8px; height: 14px;
@@ -133,6 +131,14 @@
       opacity: 0.9;
       z-index: 2000;
     }
+
+    .daily-checks {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 10px;
+      background: #1e293b;
+    }
+    .daily-checks label { display: block; margin: 5px 0; }
   </style>
 </head>
 <body>
@@ -142,18 +148,14 @@
   </header>
 
   <div class="section">
-    <div class="checkboxes">
-      <label><input type="checkbox" id="bible"> Citirea Bibliei</label>
-      <label><input type="checkbox" id="text"> Textul zilei</label>
-    </div>
-
     <h2>Astăzi</h2>
-    <div id="today-events"></div>
 
-    <div class="preview">
-      <h2>Săptămâna aceasta</h2>
-      <div id="week-events"></div>
+    <div class="daily-checks">
+      <label><input type="checkbox" id="biblia"> Citirea Bibliei</label>
+      <label><input type="checkbox" id="textul"> Textul zilei</label>
     </div>
+
+    <div id="today-events"></div>
   </div>
 
   <div class="done-section" id="done-section">
@@ -161,47 +163,59 @@
     <div id="done-events"></div>
   </div>
 
+  <div class="preview" id="week-preview">
+    <h2>Săptămâna aceasta</h2>
+    <div id="week-events"></div>
+  </div>
+
   <div class="toggle-btn" onclick="toggleForm()">☰</div>
 
   <div class="add-form" id="form">
-    <h2>Adaugă activitate</h2>
-    <label>Descriere</label>
-    <input type="text" id="desc">
-    <label>Data și ora</label>
-    <input type="datetime-local" id="datetime">
-    <label>Persoane</label>
-    <select id="person1">
-      <option value="mama">Mama</option>
-      <option value="tata">Tata</option>
-      <option value="eu">Eu</option>
-    </select>
-    <select id="person2">
-      <option value="">— nimeni —</option>
-      <option value="mama">Mama</option>
-      <option value="tata">Tata</option>
-      <option value="eu">Eu</option>
-    </select>
-    <button onclick="addEvent()">Adaugă</button>
-
-    <hr>
+    <h2>Meniu</h2>
+    <button onclick="showForm()">Adaugă activitate</button>
     <button onclick="toggleDone()">Vezi activități bifate</button>
+    <button onclick="toggleWeek()">Săptămâna aceasta</button>
     <button onclick="toggleTheme()">Schimbă fundal</button>
+
+    <div id="add-activity" style="display:none">
+      <h2>Adaugă activitate</h2>
+      <label>Descriere</label>
+      <input type="text" id="desc">
+      <label>Data și ora</label>
+      <input type="datetime-local" id="datetime">
+      <label>Persoane</label>
+      <select id="person1">
+        <option value="mama">Mama</option>
+        <option value="tata">Tata</option>
+        <option value="eu">Eu</option>
+      </select>
+      <select id="person2">
+        <option value="">— nimeni —</option>
+        <option value="mama">Mama</option>
+        <option value="tata">Tata</option>
+        <option value="eu">Eu</option>
+      </select>
+      <button onclick="addEvent()">Adaugă</button>
+    </div>
   </div>
 
   <script>
     const todayEl = document.getElementById("today");
     const today = new Date();
-    todayEl.textContent = today.toLocaleDateString("ro-RO", {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    });
-
-    const todayStr = new Date().toISOString().split("T")[0];
+    todayEl.textContent = today.toLocaleDateString("ro-RO", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
     function toggleForm() {
       document.getElementById("form").classList.toggle("open");
     }
+    function showForm() {
+      document.getElementById("add-activity").style.display =
+        document.getElementById("add-activity").style.display === "none" ? "block" : "none";
+    }
     function toggleDone() {
       document.getElementById("done-section").classList.toggle("visible");
+    }
+    function toggleWeek() {
+      document.getElementById("week-preview").classList.toggle("visible");
     }
     function toggleTheme() {
       document.body.classList.toggle("light");
@@ -212,9 +226,9 @@
         today: document.getElementById("today-events").innerHTML,
         week: document.getElementById("week-events").innerHTML,
         done: document.getElementById("done-events").innerHTML,
-        bible: document.getElementById("bible").checked,
-        text: document.getElementById("text").checked,
-        lastSave: new Date().toDateString()
+        biblia: document.getElementById("biblia").checked,
+        textul: document.getElementById("textul").checked,
+        theme: document.body.classList.contains("light")
       };
       localStorage.setItem("calendarEvents", JSON.stringify(all));
     }
@@ -223,18 +237,12 @@
       const data = localStorage.getItem("calendarEvents");
       if (!data) return;
       const parsed = JSON.parse(data);
-
-      if (parsed.lastSave !== new Date().toDateString()) {
-        localStorage.removeItem("calendarEvents");
-        return;
-      }
-
       document.getElementById("today-events").innerHTML = parsed.today;
       document.getElementById("week-events").innerHTML = parsed.week;
       document.getElementById("done-events").innerHTML = parsed.done;
-      document.getElementById("bible").checked = parsed.bible;
-      document.getElementById("text").checked = parsed.text;
-
+      document.getElementById("biblia").checked = parsed.biblia;
+      document.getElementById("textul").checked = parsed.textul;
+      if (parsed.theme) document.body.classList.add("light");
       reattachActions();
     }
 
@@ -262,35 +270,25 @@
       const datetime = document.getElementById("datetime").value;
       const p1 = document.getElementById("person1").value;
       const p2 = document.getElementById("person2").value;
-
       if (!desc || !datetime) return;
-
       const [date, time] = datetime.split("T");
-      if (!date || !time) {
-        alert("Selectează o dată și o oră!");
-        return;
-      }
 
       const div = document.createElement("div");
       div.className = "event " + p1 + (p2 ? " " + p2 : "");
-
       const content = document.createElement("div");
       content.innerHTML = `<div>${desc}</div>
-        <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
-
+                           <div class="meta">${date} — ${time} — ${p1}${p2 ? ", " + p2 : ""}</div>`;
       const actions = document.createElement("div");
       actions.className = "actions";
       actions.innerHTML = `<button class="done-btn">✅</button><button class="delete-btn">❌</button>`;
-
       div.appendChild(content);
       div.appendChild(actions);
 
       const d = new Date(date);
       const now = new Date();
-
       const diffDays = Math.floor((d - now) / (1000*60*60*24));
 
-      if (date === todayStr) {
+      if (date === new Date().toISOString().split("T")[0]) {
         document.getElementById("today-events").appendChild(div);
       } else if (diffDays >= 0 && diffDays < 7) {
         document.getElementById("week-events").appendChild(div);
@@ -298,7 +296,6 @@
         alert("Activitatea nu e azi sau săptămâna aceasta.");
         return;
       }
-
       reattachActions();
       saveEvents();
 
@@ -337,8 +334,24 @@
       }
     }
 
-    document.getElementById("bible").onchange = saveEvents;
-    document.getElementById("text").onchange = saveEvents;
+    // Reset zilnic pentru Biblie și Text
+    function resetDailyChecks() {
+      document.getElementById("biblia").checked = false;
+      document.getElementById("textul").checked = false;
+      saveEvents();
+    }
+    function scheduleReset() {
+      let now = new Date();
+      let msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0) - now;
+      setTimeout(() => {
+        resetDailyChecks();
+        scheduleReset();
+      }, msUntilMidnight);
+    }
+    scheduleReset();
+
+    document.getElementById("biblia").addEventListener("change", saveEvents);
+    document.getElementById("textul").addEventListener("change", saveEvents);
 
     loadEvents();
   </script>
